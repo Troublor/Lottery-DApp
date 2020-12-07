@@ -101,39 +101,41 @@ var populateAccount = function () {
   });
 }
 
-$( document ).ready(function() {
-  // set the web3 provider if not present
-  if (typeof web33 !== 'undefined') {
-    console.warn("Using web3 detected from external source like Metamask")
-    window.ethereum.enable();
-    window.web3 = new Web3(web3.currentProvider);
-  } else {
-    console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-  }
+$( document ).ready(()=>{
+  setTimeout(function() {
+    // set the web3 provider if not present
+    if (typeof web3 !== 'undefined') {
+      console.warn("Using web3 detected from external source like Metamask")
+      window.ethereum.enable();
+      window.web3 = new Web3(web3.currentProvider);
+    } else {
+      console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
+      window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    }
 
-  Lottery.setProvider(web3.currentProvider);
+    Lottery.setProvider(web3.currentProvider);
 
-  // total accounts
-  window.accounts = web3.eth.accounts;
-  // account used for making guesses and buying tokens
-  window.account = web3.eth.accounts[1];
+    // total accounts
+    window.accounts = web3.eth.accounts;
+    // account used for making guesses and buying tokens
+    window.account = web3.eth.accounts[0];
 
-  Lottery.deployed().then(function(contractInstance) {
+    Lottery.deployed().then(function(contractInstance) {
 
-    contractInstance.owner.call().then(function(result) {
-      owner = result;
-      $('#contract-owner').html(owner)
+      contractInstance.owner.call().then(function(result) {
+        owner = result;
+        $('#contract-owner').html(owner)
+      });
+
+      contractInstance.users.call(account).then(function(result) {
+        if(result[0] == "0x0000000000000000000000000000000000000000")
+          contractInstance.makeUser({gas: 140000, from: account});
+      });
+
+      $('#user-account').html(account);
+
+      populateAccount();
     });
 
-    contractInstance.users.call(account).then(function(result) {
-      if(result[0] == "0x0000000000000000000000000000000000000000")
-        contractInstance.makeUser({gas: 140000, from: account});
-    });
-
-    $('#user-account').html(account);
-
-    populateAccount();
-  });
-
+  }, 200)
 });
